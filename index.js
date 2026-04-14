@@ -4,15 +4,16 @@ import bodyParser from "body-parser";
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
+// ✅ جلب API KEY من Railway (آمن)
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// ✅ تأكد المفتاح موجود
 if (!API_KEY) {
   console.error("❌ Missing ANTHROPIC_API_KEY");
 }
 
+// ✅ Webhook حق واتساب
 app.post("/whatsapp", async (req, res) => {
-  const incomingMsg = req.body.Body;
+  const incomingMsg = req.body.Body || "";
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -23,64 +24,61 @@ app.post("/whatsapp", async (req, res) => {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 500,
+        model: "claude-3-haiku-20240307", // ✅ موديل شغال
+        max_tokens: 300,
         messages: [
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: `أنت موظف مبيعات محترف لمتجر GLONA متخصص في منتجات العناية بالبشرة.
+            content: `
+أنت موظف مبيعات محترف لمتجر GLONA في الخليج.
 
-التعليمات:
-- افهم طلب العميل بسرعة
-- رد بشكل مباشر بدون تعقيد
-- اقترح منتجات مناسبة حسب نوع البشرة
-- اذكر الفوائد بشكل مختصر
-- حاول تقنع العميل بالشراء
-- لا تقول "ما فهمت" أبداً
-- استخدم أسلوب واثق ومريح
+أسلوبك:
+- ودود واحترافي
+- عربي بسيط (خليجي)
+- تبيع بدون إزعاج
+
+مهم:
+- إذا العميل يسأل عن منتج → رشّح له منتج مناسب
+- إذا نوع بشرته معروف → خصص الرد
+- اعرض فائدة + نتيجة + اقتراح شراء
+- ممكن تضيف عرض خفيف
 
 رسالة العميل:
 ${incomingMsg}
 `
-              }
-            ]
           }
         ]
       })
     });
 
     const data = await response.json();
-
     console.log("Claude response:", JSON.stringify(data, null, 2));
 
-    // ✅ تحقق من الأخطاء
-    if (!data || data.error) {
-      throw new Error("Claude API Error");
+    // ✅ استخراج الرد بشكل آمن
+    let reply = data?.content?.[0]?.text;
+
+    if (!reply) {
+      reply = "حياك الله 💜 ممكن توضح لي أكثر عشان أساعدك بشكل أفضل؟";
     }
 
-    const reply =
-      data?.content?.[0]?.text ||
-      "حالياً ما قدرت أحدد المنتج المناسب، لكن أقدر أساعدك لو تعطيني تفاصيل أكثر عن بشرتك 👌";
-
+    // ✅ رد واتساب (Twilio XML)
     res.set("Content-Type", "text/xml");
     res.send(`
-      <Response>
-        <Message>${reply}</Message>
-      </Response>
+<Response>
+  <Message>${reply}</Message>
+</Response>
     `);
 
   } catch (error) {
     console.error("❌ ERROR:", error);
 
     res.send(`
-      <Response>
-        <Message>صار خطأ مؤقت، حاول مرة ثانية بعد شوي 🙏</Message>
-      </Response>
+<Response>
+  <Message>صار خطأ مؤقت 🙏 حاول مرة ثانية بعد شوي</Message>
+</Response>
     `);
   }
 });
 
-app.listen(3000, () => console.log("🚀 Server running"));
+// ✅ تشغيل السيرفر
+app.listen(3000, () => console.log("🚀 Server running on port 3000"));
