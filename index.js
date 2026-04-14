@@ -4,6 +4,9 @@ import bodyParser from "body-parser";
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
+app.get("/", (req, res) => res.send("Bot is running ✅"));
+app.use((err, req, res, next) => { console.error(err); res.status(500).send("Error"); });
+
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 if (!API_KEY) console.error("❌ Missing ANTHROPIC_API_KEY");
 
