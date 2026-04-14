@@ -1,23 +1,26 @@
 import express from "express";
 import bodyParser from "body-parser";
 
+console.log("Starting app...");
+
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
-
-app.get("/", (req, res) => res.send("Bot is running ✅"));
-app.use((err, req, res, next) => { console.error(err); res.status(500).send("Error"); });
+app.use(bodyParser.json());
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
-if (!API_KEY) console.error("❌ Missing ANTHROPIC_API_KEY");
+console.log("API_KEY loaded:", API_KEY ? "YES" : "NO");
 
-app.get("/", (req, res) => res.send("Bot is running ✅"));
+app.get("/", (req, res) => {
+  res.send("Bot is running OK");
+});
+
 app.post("/whatsapp", async (req, res) => {
   const incomingMsg = req.body.Body?.trim() || "";
+  console.log("Incoming message:", incomingMsg);
 
-  // رسالة فارغة
   if (!incomingMsg) {
     res.set("Content-Type", "text/xml");
-    return res.send(`<Response><Message><![CDATA[أهلاً! كيف أقدر أساعدك؟ 💜]]></Message></Response>`);
+    return res.send(`<Response><Message><![CDATA[ahlan! kaif agdar asaedak?]]></Message></Response>`);
   }
 
   try {
@@ -31,34 +34,28 @@ app.post("/whatsapp", async (req, res) => {
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         max_tokens: 300,
-        system: `أنت موظف مبيعات محترف لمتجر GLONA للعناية بالبشرة.
-افهم رسالة العميل حتى لو كانت قصيرة.
-تعليمات:
-- إذا قال "بشرة دهنية" → اقترح منتجات تقلل الدهون وتمنع الحبوب
-- إذا ما وضح → اسأله سؤال بسيط
-- أعطِ توصية مباشرة (لا تقول "ما فهمت")
-- استخدم أسلوب خليجي بسيط
-- حاول تقنع العميل بالشراء بشكل ذكي`,
+        system: "You are a helpful sales assistant for GLONA skincare store. Respond in Arabic Gulf dialect. Be friendly and helpful.",
         messages: [{ role: "user", content: incomingMsg }]
       })
     });
 
     const data = await response.json();
-    console.log("Claude response:", JSON.stringify(data, null, 2));
+    console.log("Claude status:", response.status);
 
-    let reply = data?.content?.[0]?.text
-      || "حياك الله 💜 ممكن توضح لي أكثر عشان أساعدك بشكل أفضل؟";
+    let reply = data?.content?.[0]?.text || "hayak allah, momken towadeh akthar?";
+    console.log("Reply:", reply.substring(0, 50));
 
     res.set("Content-Type", "text/xml");
     res.send(`<Response><Message><![CDATA[${reply}]]></Message></Response>`);
 
   } catch (error) {
-    console.error("❌ ERROR:", error);
+    console.error("ERROR:", error.message);
     res.set("Content-Type", "text/xml");
-    res.send(`<Response><Message><![CDATA[صار خطأ مؤقت 🙏 حاول مرة ثانية بعد شوي]]></Message></Response>`);
+    res.send(`<Response><Message><![CDATA[sara5 mowaqat, hawi mara thanya]]></Message></Response>`);
   }
 });
 
-app.listen(process.env.PORT || 3000, '0.0.0.0', () =>
-  console.log(`🚀 Server running on port ${process.env.PORT || 3000}`)
-);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server running on port " + PORT);
+});
