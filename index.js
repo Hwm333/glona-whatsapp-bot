@@ -1,14 +1,11 @@
 import express from "express";
 import bodyParser from "body-parser";
 
-console.log("Starting app...");
-
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
-console.log("API_KEY loaded:", API_KEY ? "YES" : "NO");
 
 app.get("/", (req, res) => {
   res.send("Bot is running OK");
@@ -16,11 +13,11 @@ app.get("/", (req, res) => {
 
 app.post("/whatsapp", async (req, res) => {
   const incomingMsg = req.body.Body?.trim() || "";
-  console.log("Incoming message:", incomingMsg);
+  console.log("Incoming:", incomingMsg);
 
   if (!incomingMsg) {
     res.set("Content-Type", "text/xml");
-    return res.send(`<Response><Message><![CDATA[ahlan! kaif agdar asaedak?]]></Message></Response>`);
+    return res.send(`<Response><Message><![CDATA[اهلاً بك في GLONA! كيف اقدر اساعدك؟ 💜]]></Message></Response>`);
   }
 
   try {
@@ -34,7 +31,19 @@ app.post("/whatsapp", async (req, res) => {
       body: JSON.stringify({
         model: "claude-3-haiku-20240307",
         max_tokens: 300,
-        system: "You are a helpful sales assistant for GLONA skincare store. Respond in Arabic Gulf dialect. Be friendly and helpful.",
+        system: `You are a professional sales assistant for GLONA skincare store.
+
+IMPORTANT LANGUAGE RULE: Always detect the language of the customer's message and reply in the SAME language.
+- If the customer writes in Arabic → reply in Arabic (Gulf dialect)
+- If the customer writes in English → reply in English
+- If mixed → use the dominant language
+
+Sales instructions:
+- If they mention oily skin → suggest products that reduce oil and prevent acne
+- If unclear → ask one simple question
+- Give direct recommendations
+- Be friendly and persuasive
+- Never say "I don't understand"`,
         messages: [{ role: "user", content: incomingMsg }]
       })
     });
@@ -42,8 +51,8 @@ app.post("/whatsapp", async (req, res) => {
     const data = await response.json();
     console.log("Claude status:", response.status);
 
-    let reply = data?.content?.[0]?.text || "hayak allah, momken towadeh akthar?";
-    console.log("Reply:", reply.substring(0, 50));
+    let reply = data?.content?.[0]?.text || "حياك الله، ممكن توضح اكثر؟";
+    console.log("Reply:", reply.substring(0, 80));
 
     res.set("Content-Type", "text/xml");
     res.send(`<Response><Message><![CDATA[${reply}]]></Message></Response>`);
@@ -51,7 +60,7 @@ app.post("/whatsapp", async (req, res) => {
   } catch (error) {
     console.error("ERROR:", error.message);
     res.set("Content-Type", "text/xml");
-    res.send(`<Response><Message><![CDATA[sara5 mowaqat, hawi mara thanya]]></Message></Response>`);
+    res.send(`<Response><Message><![CDATA[صار خطأ مؤقت، حاول مرة ثانية]]></Message></Response>`);
   }
 });
 
