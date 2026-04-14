@@ -4,7 +4,7 @@ import bodyParser from "body-parser";
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
+const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY; // 👈 مهم جداً
 
 app.post("/whatsapp", async (req, res) => {
   const incomingMsg = req.body.Body;
@@ -38,7 +38,9 @@ ${incomingMsg}
     });
 
     const data = await response.json();
-    const userMessage = req.body.Body;
+
+    // ✅ هذا أهم سطر
+    const reply = data.content[0].text;
 
     res.set("Content-Type", "text/xml");
     res.send(`
@@ -49,6 +51,7 @@ ${incomingMsg}
 
   } catch (error) {
     console.error(error);
+
     res.send(`
       <Response>
         <Message>صار خطأ، حاول مرة ثانية</Message>
