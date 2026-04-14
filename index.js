@@ -29,7 +29,7 @@ app.post("/whatsapp", async (req, res) => {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-5-20251022",
         max_tokens: 300,
         system: `You are a professional sales assistant for GLONA skincare store.
 
