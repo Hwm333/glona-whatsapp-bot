@@ -38,7 +38,7 @@ ${incomingMsg}
     });
 
     const data = await response.json();
-    const reply = data.content[0].text;
+    const userMessage = req.body.Body;
 
     res.set("Content-Type", "text/xml");
     res.send(`
