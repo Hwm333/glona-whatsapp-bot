@@ -38,9 +38,10 @@ ${incomingMsg}
     });
 
     const data = await response.json();
+    console.log("Claude response:", JSON.stringify(data, null, 2));
 
     // ✅ هذا أهم سطر
-    const reply = data.content[0].text;
+    const reply = data?.content?.[0]?.text || "ما قدرت أفهم طلبك، ممكن توضّح أكثر؟";
 
     res.set("Content-Type", "text/xml");
     res.send(`
