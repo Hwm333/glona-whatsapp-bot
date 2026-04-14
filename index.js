@@ -7,6 +7,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 if (!API_KEY) console.error("❌ Missing ANTHROPIC_API_KEY");
 
+app.get("/", (req, res) => res.send("Bot is running ✅"));
 app.post("/whatsapp", async (req, res) => {
   const incomingMsg = req.body.Body?.trim() || "";
 
