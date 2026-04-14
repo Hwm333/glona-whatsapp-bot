@@ -13,7 +13,7 @@ app.post("/whatsapp", async (req, res) => {
   // رسالة فارغة
   if (!incomingMsg) {
     res.set("Content-Type", "text/xml");
-    return res.send(`<Response><Message>أهلاً! كيف أقدر أساعدك؟ 💜</Message></Response>`);
+    return res.send(`<Response><Message><![CDATA[أهلاً! كيف أقدر أساعدك؟ 💜]]></Message></Response>`);
   }
 
   try {
@@ -42,19 +42,19 @@ app.post("/whatsapp", async (req, res) => {
     const data = await response.json();
     console.log("Claude response:", JSON.stringify(data, null, 2));
 
-    let reply = data?.content?.[0]?.text 
+    let reply = data?.content?.[0]?.text
       || "حياك الله 💜 ممكن توضح لي أكثر عشان أساعدك بشكل أفضل؟";
 
     res.set("Content-Type", "text/xml");
-    res.send(`<Response><Message>${reply}</Message></Response>`);
+    res.send(`<Response><Message><![CDATA[${reply}]]></Message></Response>`);
 
   } catch (error) {
     console.error("❌ ERROR:", error);
-    res.send(`<Response><Message>صار خطأ مؤقت 🙏 حاول مرة ثانية بعد شوي</Message></Response>`);
+    res.set("Content-Type", "text/xml");
+    res.send(`<Response><Message><![CDATA[صار خطأ مؤقت 🙏 حاول مرة ثانية بعد شوي]]></Message></Response>`);
   }
 });
 
-// ✅ الإصلاح الرئيسي
-app.listen(process.env.PORT || 3000, () => 
+app.listen(process.env.PORT || 3000, () =>
   console.log(`🚀 Server running on port ${process.env.PORT || 3000}`)
 );
